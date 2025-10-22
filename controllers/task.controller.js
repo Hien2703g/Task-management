@@ -80,7 +80,7 @@ module.exports.changeStatus = async (req, res) => {
     });
   }
 };
-//[PATCH] /api/v1/tasks/change-multi
+
 module.exports.changeMulti = async (req, res) => {
   try {
     const { ids, key, value } = req.body;
