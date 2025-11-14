@@ -1,7 +1,7 @@
 const express = require("express");
 require("dotenv").config();
 
-const database = require("./config/database");
+const database = require("./v1/config/database");
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 
@@ -16,9 +16,12 @@ app.use(cookieParser());
 app.use(cors());
 // parse application/json
 app.use(bodyParser.json());
-const route = require("./routes/index.route");
+
+const route = require("./v1/routes/index.route");
+const routeAdmin = require("./v2/routes/index.route");
 
 route(app);
+routeAdmin(app);
 app.listen(port, () => {
   console.log(`App listening on post ${port}`);
 });

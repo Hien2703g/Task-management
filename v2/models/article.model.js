@@ -1,20 +1,19 @@
 const mongoose = require("mongoose");
-const taskSchema = new mongoose.Schema(
+const articleSchema = new mongoose.Schema(
   {
+    account_id: String,
     title: String,
-    status: String,
     content: String,
-    timeStart: Date,
-    timeFinish: Date,
     deleted: {
       type: Boolean,
       default: false,
     },
+    position: Number,
     deletedAt: Date,
   },
   { timestamps: true }
 );
 
-const Task = mongoose.model("Task", taskSchema, "tasks");
+const Article = mongoose.model("Article", articleSchema, "article");
 
-module.exports = Task;
+module.exports = Article;
