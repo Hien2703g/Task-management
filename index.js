@@ -17,11 +17,14 @@ app.use(cors());
 // parse application/json
 app.use(bodyParser.json());
 
-const route = require("./v1/routes/index.route");
+const route = require("./v1/routes/User/index.route");
 const routeAdmin = require("./v2/routes/index.route");
+const routeManager = require("./v1/routes/Manager/index.route");
 
 route(app);
 routeAdmin(app);
+routeManager(app);
+
 app.listen(port, () => {
   console.log(`App listening on post ${port}`);
 });
