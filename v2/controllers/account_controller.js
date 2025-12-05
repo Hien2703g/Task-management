@@ -1,106 +1,194 @@
+const { query, application } = require("express");
 const md5 = require("md5");
 const Account = require("../models/account.model");
+const Role = require("../models/role.model");
+const systemConfig = require("../config/system");
+// [GET]/amdin/accounts
+module.exports.index = async (req, res) => {
+  try {
+    // console.log("ok");
+    let find = {
+      deleted: false,
+    };
+    const records = await Account.find(find).select("-password -token");
+    // console.log(records);
+    for (const record of records) {
+      const role = await Role.findOne({
+        _id: record.role_id,
+        // deleted: false,
+      });
+      if (!role.deleted) {
+        record.role = role;
+      }
+      // console.log(record.role);
+    }
+    res.render("pages/accounts/index.pug", {
+      pageTitle: "Danh sách tài khoản",
+      records: records,
+    });
+    // res.send("Trang tong quan");
+  } catch (error) {
+    req.flash("error", `Hành động thất bại`);
+    res.redirect(`${systemConfig.prefixAdmin}/dashboard`);
+  }
+};
+// [PATCH]/admin/products/change-status/:status/:id
+module.exports.changeStatus = async (req, res) => {
+  try {
+    // console.log(req.params);
+    const status = req.params.status;
+    const id = req.params.id;
+    await Account.updateOne({ _id: id }, { status: status });
+    req.flash("success", "Cập nhật trạng thái thành công!");
+    res.redirect("back");
+  } catch (error) {
+    req.flash("error", `tài khoản không tồn tại`);
+    res.redirect(`${systemConfig.prefixAdmin}/accounts`);
+  }
+};
+//[GET] admin/accounts/create
+module.exports.create = async (req, res) => {
+  try {
+    const roles = await Role.find({ deleted: false });
+    let find = {
+      deleted: false,
+    };
+    const records = await Account.find(find);
 
-const generateHelper = require("../helpers/generate");
+    res.render("pages/accounts/create", {
+      pageTitle: "Thêm mới sản phẩm",
+      records: records,
+      roles: roles,
+    });
+  } catch (error) {
+    req.flash("error", `lỗi`);
+    res.redirect(`${systemConfig.prefixAdmin}/accounts`);
+  }
+};
+
 //[POST] admin/accounts/create
 module.exports.createPost = async (req, res) => {
+  // console.log(req.body);
   try {
-    // console.log(req.body);
-    console.log(req.body);
-    req.body.password = md5(req.body.password);
-    // console.log(req.body);
-    const existEmail = await Account.findOne({
+    const emailExist = await Account.findOne({
       email: req.body.email,
       deleted: false,
     });
-    // console.log(existEmail);
-    if (existEmail) {
-      res.json({
-        code: 400,
-        message: "Email đã tồn tại!",
-      });
+    // console.log(emailExist);
+    if (emailExist) {
+      req.flash("error", "Email da ton tai");
+      res.redirect("back");
     } else {
-      const user = new Account({
-        fullName: req.body.fullName,
-        email: req.body.email,
-        password: req.body.password,
-        token: generateHelper.generateRandomString(30),
-      });
-      user.save();
-      const token = user.token;
-      res.cookie("token", token);
-      res.json({
-        code: 200,
-        message: "Tao tai khoan thanh cong",
-        token: token,
-      });
+      req.body.password = md5(req.body.password);
+      const record = new Account(req.body);
+      await record.save();
+      req.flash("success", "Tạo mới tài khoản thành công!!!");
+      res.redirect(`${systemConfig.prefixAdmin}/accounts`);
     }
   } catch (error) {
-    res.json({
-      code: 404,
-      message: "Dismiss",
+    req.flash("error", `tài khoản không tồn tại`);
+    res.redirect(`${systemConfig.prefixAdmin}/accounts`);
+  }
+};
+
+//[GET] admin/accounts/edit/:id
+module.exports.edit = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const data = await Account.findOne({
+      _id: id,
+      deleted: false,
     });
+    const roles = await Role.find({
+      deleted: false,
+    });
+    res.render("pages/accounts/edit", {
+      pageTitle: "Chỉnh sửa tài khoản",
+      data: data,
+      roles: roles,
+    });
+  } catch (error) {
+    req.flash("error", `Tài khoản không tồn tại`);
+    res.redirect(`${systemConfig.prefixAdmin}/accounts`);
   }
 };
 
 //[PATCH] admin/accounts/edit/:id
-module.exports.edit = async (req, res) => {
+module.exports.editPatch = async (req, res) => {
+  const id = req.params.id;
   try {
-    const id = req.params.id;
-    console.log(id);
     const emailExist = await Account.findOne({
       _id: { $ne: id },
       email: req.body.email,
       deleted: false,
     });
-    console.log(emailExist);
+
     if (emailExist) {
-      res.json({
-        code: 400,
-        message: `Email ${req.body.email} đã tồn tại`,
-      });
+      req.flash("error", `Email ${req.body.email} đã tồn tại!`);
     } else {
       if (req.body.password) {
         req.body.password = md5(req.body.password);
       } else {
         delete req.body.password;
       }
+      // console.log(req.body);
       await Account.updateOne(
         {
           _id: id,
         },
         req.body
       );
-      res.json({
-        code: 200,
-        message: "đã cập nhật tài khoản",
-      });
+
+      req.flash("success", "Cập nhật tài khoản thành công!");
     }
+
+    res.redirect("back");
   } catch (error) {
-    res.json({
-      code: 404,
-      message: "Dismiss",
-    });
+    req.flash("error", `tài khoản không cập nhập thành công`);
+    res.redirect(`back`);
   }
 };
 
-//[GET] admin/accounts/detail
+module.exports.deleteItem = async (req, res) => {
+  try {
+    const id = req.params.id;
+    await Account.updateOne(
+      {
+        _id: id,
+      },
+      {
+        deleted: true,
+      }
+    );
+
+    req.flash("success", `Đã xoá thành công!`);
+
+    res.redirect("back");
+  } catch (error) {
+    req.flash("error", `tài khoản không cập nhập thành công`);
+    res.redirect(`back`);
+  }
+};
+
+// [GET] /admin/Account/detail/:id
 module.exports.detail = async (req, res) => {
   try {
     const find = {
       deleted: false,
       _id: req.params.id,
     };
-    const account = await Account.findOne(find).select("-password -token");
-    res.json({
-      code: 200,
-      message: "Lay thong tin nguoi dung thanh cong",
-      data: account,
+    const account = await Account.findOne(find);
+    const role = await Role.findOne({
+      _id: account.role_id,
+      deleted: false,
+    });
+    res.render("pages/accounts/detail", {
+      pageTitle: account.title,
+      account: account,
+      role: role,
     });
   } catch (error) {
-    res.json({
-      code: 404,
-      message: "Dismiss",
-    });
+    req.flash("error", `Loi `);
+    res.redirect(`${systemConfig.prefixAdmin}/accounts`);
   }
 };

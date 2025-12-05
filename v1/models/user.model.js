@@ -9,12 +9,35 @@ const userSchema = new mongoose.Schema(
     token: String,
     role: {
       type: String,
-      default: "USER",
+      default: "USER", // Mặc định là USER. Muốn có tài khoản MANAGER thì do admin cấp.
     },
+
+    phone: String,
+    avatar: String,
     status: {
       type: String,
       default: "active",
     },
+    requestFriends: Array, // Lời mời đã gửi
+    acceptFriends: Array, // Lời mời đã nhận
+    friendList: [
+      // danh sách bạn bè
+      {
+        user_id: String,
+        room_chat_id: String,
+      },
+    ],
+    statusOnline: String,
+    deletedBy: {
+      account_id: String,
+      deletedAt: Date,
+    },
+    updatedBy: [
+      {
+        account_id: String,
+        updatedAt: Date,
+      },
+    ],
     deleted: {
       type: Boolean,
       default: false,

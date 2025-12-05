@@ -2,57 +2,53 @@ const { query, application } = require("express");
 const md5 = require("md5");
 
 const Account = require("../models/account.model");
+const systemConfig = require("../config/system");
 
-//[POST] /admin/auth/login
-module.exports.loginPost = async (req, res) => {
-  try {
-    // console.log(req.body);
-    const email = req.body.email;
-    const password = req.body.password;
-
-    const user = await Account.findOne({
-      email: email,
-      deleted: false,
-    });
-    // console.log(user);
-    if (!user) {
-      res.json({
-        code: 400,
-        message: "Tài khoản không tồn tại!!!",
-      });
-    }
-    if (md5(password) != user.password) {
-      res.json({
-        code: 400,
-        message: "Sai mat khau!!!",
-      });
-    }
-    if (user.deleted != false) {
-      res.json({
-        code: 400,
-        message: "Tai khoan da bi khoa!!!",
-      });
-    }
-    const token = user.token;
-    res.cookie("token", token);
-    res.json({
-      code: 200,
-      message: "Dang nhap thanh cong",
-      token: token,
-    });
-  } catch (error) {
-    res.json({
-      code: 404,
-      message: "Dismiss",
+//[GET] /admin/auth/login
+module.exports.login = (req, res) => {
+  // console.log(req.cookies.token);
+  if (req.cookies.token) {
+    res.redirect(`${systemConfig.prefixAdmin}/dashboard`);
+  } else {
+    res.render("pages/auth/login.pug", {
+      pageTitle: "Login",
     });
   }
 };
-
-//[GET] /admin/auth/logout
-module.exports.logout = (req, res) => {
-  res.clearCookie("token");
-  res.json({
-    code: 200,
-    message: "Đã đăng xuất thành công",
+//[POST] /admin/auth/login
+module.exports.loginPost = async (req, res) => {
+  // console.log(req.body);
+  const email = req.body.email;
+  const password = req.body.password;
+  // console.log(req.body.email);
+  // console.log(req.body.password);
+  const user = await Account.findOne({
+    email: email,
+    deleted: false,
   });
+  // console.log(user);
+  if (!user) {
+    req.flash("error", "Không tồn tại tài khoản !!!");
+    res.redirect(`${systemConfig.prefixAdmin}/auth/login`);
+    return;
+  }
+  if (md5(password) != user.password) {
+    req.flash("error", "Sai mật khẩu !!!");
+    res.redirect(`${systemConfig.prefixAdmin}/auth/login`);
+    return;
+  }
+  // if (user.status != "active") {
+  //   req.flash("error", "Tài khoản đã bị khóa !!!");
+  //   res.redirect(`${systemConfig.prefixAdmin}/auth/login`);
+  //   return;
+  // }
+  res.cookie("token", user.token);
+  res.redirect(`${systemConfig.prefixAdmin}/dashboard`);
 };
+
+module.exports.logout = (req, res) => {
+  // Xóa token trong cookie
+  res.clearCookie("token");
+  res.redirect(`${systemConfig.prefixAdmin}/auth/login`);
+};
+//

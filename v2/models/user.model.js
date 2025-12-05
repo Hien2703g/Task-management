@@ -1,0 +1,34 @@
+const mongoose = require("mongoose");
+const generate = require("../helpers/generate");
+
+const userSchema = new mongoose.Schema(
+  {
+    fullName: String,
+    email: String,
+    password: String,
+    token: String,
+    role: {
+      type: String,
+      default: "USER", // Mặc định là USER. Muốn có tài khoản MANAGER thì do admin cấp.
+    },
+    status: {
+      type: String,
+      default: "active",
+    },
+    deleted: {
+      type: Boolean,
+      default: false,
+    },
+    deletedAt: Date,
+  },
+
+  {
+    timestamps: true,
+  }
+);
+
+// const User = mongoose.model("User", userSchema, "users");
+
+// module.exports = User;
+module.exports =
+  mongoose.models.User || mongoose.model("User", userSchema, "users");

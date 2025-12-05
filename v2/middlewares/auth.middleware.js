@@ -1,6 +1,6 @@
-const systemConfig = require("../../config/system");
-const Account = require("../../models/account.model");
-const Role = require("../../models/role.model");
+const systemConfig = require("../config/system");
+const Account = require("../models/account.model");
+const Role = require("../models/role.model");
 module.exports.requireAuth = async (req, res, next) => {
   //   console.log(req.cookies.token);
   if (!req.cookies.token) {
@@ -9,6 +9,7 @@ module.exports.requireAuth = async (req, res, next) => {
     const user = await Account.findOne({ token: req.cookies.token }).select(
       "-password"
     );
+    // console.log(user);
     if (!user) {
       res.redirect(`${systemConfig.prefixAdmin}/auth/login`);
     } else {
@@ -17,6 +18,7 @@ module.exports.requireAuth = async (req, res, next) => {
       }).select("title permissions");
       res.locals.user = user;
       res.locals.role = role;
+
       next();
     }
   }
