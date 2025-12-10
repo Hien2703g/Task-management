@@ -74,7 +74,7 @@ module.exports.delete = async (req, res) => {
   try {
     const postId = req.params.id;
     await Article.updateOne({ _id: postId }, { deleted: true });
-    res.redirect("back");
+    res.redirect(`${systemConfig.prefixAdmin}/articles`);
   } catch (error) {
     req.flash("error", `Hành động lỗi`);
     res.redirect(`${systemConfig.prefixAdmin}/articles`);

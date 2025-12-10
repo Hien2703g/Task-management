@@ -1,6 +1,8 @@
 const Task = require("../../models/task.model");
 const PagitationHelper = require("../../helpers/pagitation");
 const SearchHelper = require("../../helpers/search");
+const Notification = require("../../models/notification.model");
+
 //[GET]/api/v1/tasks
 module.exports.index = async (req, res) => {
   const find = {
@@ -136,10 +138,19 @@ module.exports.changeMulti = async (req, res) => {
 //[POST]/api/v1/tasks/create
 module.exports.create = async (req, res) => {
   try {
-    console.log(req.user.id);
+    // console.log(req.user.id);
     req.body.createdBy = req.user.id;
     const task = new Task(req.body);
     const data = await task.save();
+    // console.log(data.id);
+    await Notification.create({
+      User_id: req.user.id,
+      Sender_id: req.user.id,
+      title: "Tạo công việc mới",
+      message: `Bạn vừa tạo task: ${data.title}`,
+      type: "task_created",
+      URL: `/tasks/${data._id}`,
+    });
     res.json({
       code: 200,
       message: "success",
@@ -157,6 +168,14 @@ module.exports.edit = async (req, res) => {
   try {
     const id = req.params.id;
     await Task.updateOne({ _id: id }, req.body);
+    await Notification.create({
+      User_id: req.user.id, // người nhận
+      Sender_id: req.user.id, // người chỉnh sửa
+      title: "Cập nhật Task",
+      message: `Task ID ${id} đã được cập nhật.`,
+      type: "update_task",
+      URL: `/tasks/${id}`,
+    });
     res.json({
       code: 200,
       message: "success",
@@ -180,6 +199,14 @@ module.exports.delete = async (req, res) => {
         deletedBy: req.user.id,
       }
     );
+    await Notification.create({
+      User_id: req.user.id, // người nhận
+      Sender_id: req.user.id, // người chỉnh sửa
+      title: "Xoá Task",
+      message: `Task ID ${id} đã bị xoá.`,
+      type: "deleted_task",
+      URL: `/tasks/${id}`,
+    });
     res.json({
       code: 200,
       message: "success",
@@ -205,7 +232,7 @@ module.exports.changePriority = async (req, res) => {
         priority: priority,
       }
     );
-    console.log(req.body);
+    // console.log(req.body);
 
     res.json({
       code: 200,

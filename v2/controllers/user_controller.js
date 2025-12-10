@@ -99,9 +99,30 @@ module.exports.changeStatus = async (req, res) => {
       { status: status, $push: { updatedBy: updatedBy } }
     );
     req.flash("success", "Cập nhật trạng thái thành công!");
-    res.redirect("back");
+    res.redirect(`${systemConfig.prefixAdmin}/users`);
   } catch (error) {
     req.flash("error", "Cập nhật trạng thái thất bại!");
+    res.redirect(`${systemConfig.prefixAdmin}/users`);
+  }
+};
+// [PATCH]/admin/products/change-role/:role/:id
+module.exports.changeRole = async (req, res) => {
+  try {
+    // console.log(req.params);
+    const role = req.params.role;
+    const id = req.params.id;
+    const updatedBy = {
+      account_id: res.locals.user.id,
+      updatedAt: new Date(),
+    };
+    await User.updateOne(
+      { _id: id },
+      { role: role, $push: { updatedBy: updatedBy } }
+    );
+    req.flash("success", "Cập nhật quyền thành công!");
+    res.redirect(`${systemConfig.prefixAdmin}/users`);
+  } catch (error) {
+    req.flash("error", "Cập nhật quyền thất bại!");
     res.redirect(`${systemConfig.prefixAdmin}/users`);
   }
 };

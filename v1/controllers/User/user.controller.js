@@ -146,39 +146,89 @@ module.exports.otpPassword = async (req, res) => {
 };
 
 //[POST] /api/v1/users/password/reset
+// module.exports.resetPassword = async (req, res) => {
+//   const token = req.cookies.token;
+//   const password = req.body.password;
+
+//   console.log(token);
+//   console.log(password);
+
+//   const user = await User.findOne({
+//     token: token,
+//   });
+
+//   if (md5(password) === user.password) {
+//     res.json({
+//       code: 400,
+//       message: "Vui nhap mat khau moi khac mk cũ!!!",
+//     });
+//     return;
+//   }
+
+//   await User.updateOne(
+//     {
+//       token: token,
+//     },
+//     {
+//       password: md5(password),
+//     }
+//   );
+//   res.json({
+//     code: 200,
+//     message: "Đổi mật khẩu thành công",
+//   });
+// };
+
 module.exports.resetPassword = async (req, res) => {
-  const token = req.cookies.token;
-  const password = req.body.password;
+  try {
+    const email = req.body.email;
+    const password = req.body.password;
 
-  console.log(token);
-  console.log(password);
-
-  const user = await User.findOne({
-    token: token,
-  });
-
-  if (md5(password) === user.password) {
-    res.json({
-      code: 400,
-      message: "Vui nhap mat khau moi khac mk cũ!!!",
-    });
-    return;
-  }
-
-  await User.updateOne(
-    {
-      token: token,
-    },
-    {
-      password: md5(password),
+    if (!email || !password) {
+      res.json({
+        code: 400,
+        message: "Email và mật khẩu là bắt buộc!",
+      });
+      return;
     }
-  );
-  res.json({
-    code: 200,
-    message: "Đổi mật khẩu thành công",
-  });
-};
 
+    const user = await User.findOne({
+      email: email,
+      deleted: false,
+    });
+
+    if (!user) {
+      res.json({
+        code: 400,
+        message: "Người dùng không tồn tại!",
+      });
+      return;
+    }
+
+    // Kiểm tra mật khẩu mới có khác mật khẩu cũ không
+    if (md5(password) === user.password) {
+      res.json({
+        code: 400,
+        message: "Vui lòng nhập mật khẩu mới khác mật khẩu cũ!!!",
+      });
+      return;
+    }
+
+    // Cập nhật mật khẩu
+    await User.updateOne({ email: email }, { password: md5(password) });
+
+    res.json({
+      code: 200,
+      message: "Đổi mật khẩu thành công",
+    });
+  } catch (error) {
+    console.error("Reset password error:", error);
+    res.json({
+      code: 500,
+      message: "Lỗi đặt lại mật khẩu",
+    });
+  }
+};
 //[GET] /api/v1/users/detail
 module.exports.detail = async (req, res) => {
   const token = req.cookies.token;

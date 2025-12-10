@@ -2,6 +2,7 @@ const taskRoute = require("./task.route");
 const userRoute = require("./user.route");
 const projectRoute = require("./project.route");
 const diaryRoute = require("./user.route");
+const userSocialRoutes = require("./social.route");
 
 const authMiddleware = require("../../middlewares/User/auth.middlewares");
 

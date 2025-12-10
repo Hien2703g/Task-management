@@ -19,6 +19,29 @@ if (buttonsChangeStatus.length > 0) {
 }
 // End Change Status
 
+// Change role_USER
+const buttonsChangeRole_User = document.querySelectorAll(
+  "[button-change-role]"
+);
+if (buttonsChangeRole_User.length > 0) {
+  const formChangeRole = document.querySelector("#form-change-role");
+  const path = formChangeRole.getAttribute("data-path");
+  // console.log(path);
+  //   console.log(buttonsChangeStatus);
+  buttonsChangeRole_User.forEach((button) => {
+    button.addEventListener("click", () => {
+      const roleCurrent = button.getAttribute("data-role");
+      const id = button.getAttribute("data-id");
+      let roleChange = roleCurrent == "MANAGER" ? "USER" : "MANAGER";
+      const action = path + `/${roleChange}/${id}?_method=PATCH`;
+      //   console.log(action);
+      formChangeRole.action = action;
+      formChangeRole.submit();
+    });
+  });
+}
+// End Change role_USER
+
 //Delete Item
 const buttonsDelete = document.querySelectorAll("[button-delete]");
 if (buttonsDelete.length > 0) {
