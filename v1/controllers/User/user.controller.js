@@ -41,6 +41,7 @@ module.exports.register = async (req, res) => {
 
 //[POST] /api/v1/users/login
 module.exports.login = async (req, res) => {
+  console.log(req.body);
   const email = req.body.email;
   const password = req.body.password;
   const user = await User.findOne({
@@ -63,13 +64,19 @@ module.exports.login = async (req, res) => {
     });
     return;
   }
-
+  const userInfo = {
+    _id: user._id,
+    fullName: user.fullName,
+    email: user.email,
+    role: user.role || "user",
+  };
   const token = user.token;
   res.cookie("token", token);
   res.json({
     code: 200,
     message: "Dang nhap thanh cong",
     token: token,
+    user: userInfo,
   });
 };
 //[POST]/api/v1/users/password/forgot

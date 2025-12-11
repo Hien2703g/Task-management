@@ -13,12 +13,16 @@ module.exports.index = async (req, res) => {
   if (req.query.status) {
     find.status = req.query.status;
   }
+  if (req.query.tag) {
+    find.tag = req.query.tag;
+  }
   //Search
   let objectSearch = SearchHelper(req.query);
   if (req.query.keyword) {
     find.title = objectSearch.regex;
   }
   //end search
+
   //Pagination
   let initPagination = {
     currentPage: 1,
@@ -51,11 +55,12 @@ module.exports.detail = async (req, res) => {
   try {
     const id = req.params.id;
     const findcomment = {
+      $or: [{ createdBy: req.user.id }, { listUser: req.user.id }],
       deleted: false,
       project_id: id,
     };
     const comment = await Comment.find(findcomment);
-    console.log(comment);
+    // console.log(comment);
     const project = await Project.findOne({
       _id: id,
       deleted: false,
@@ -77,12 +82,13 @@ module.exports.create = async (req, res) => {
     // console.log(req.user.id);
     req.body.createdBy = req.user.id;
     // console.log(req.body.projectParentId);
-    const ProjectParen = await Project.findOne({
+    const ProjectParent = await Project.findOne({
+      $or: [{ createdBy: req.user.id }, { listUser: req.user.id }],
       _id: req.body.projectParentId,
       deleted: false,
     });
-    // console.log(ProjectParen);
-    if (ProjectParen) {
+    // console.log(ProjectParent);
+    if (ProjectParent) {
       const project = new Project(req.body);
       const data = await project.save();
       res.json({
@@ -92,7 +98,7 @@ module.exports.create = async (req, res) => {
       });
     } else {
       res.json({
-        message: "Khoong thấy ProjectParen",
+        message: "Khoong thấy ProjectParent",
       });
     }
   } catch (error) {
@@ -132,7 +138,7 @@ module.exports.edit = async (req, res) => {
     } else {
       res.json({
         code: 200,
-        message: "Ban khong phai nguoi tao du an, nen khong the xoa",
+        message: "Ban khong phai nguoi tao du an, nen khong the sửa",
       });
     }
   } catch (error) {

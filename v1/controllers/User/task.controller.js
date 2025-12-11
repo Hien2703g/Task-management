@@ -7,6 +7,7 @@ const Notification = require("../../models/notification.model");
 module.exports.index = async (req, res) => {
   const find = {
     deleted: false,
+    createdBy: req.user.id,
   };
   if (req.query.status) {
     find.status = req.query.status;
@@ -86,9 +87,9 @@ module.exports.changeStatus = async (req, res) => {
 module.exports.changeMulti = async (req, res) => {
   try {
     const { ids, key, value } = req.body;
-    console.log(ids);
-    console.log(key);
-    console.log(value);
+    // console.log(ids);
+    // console.log(key);
+    // console.log(value);
     switch (key) {
       case "status":
         await Task.updateMany(

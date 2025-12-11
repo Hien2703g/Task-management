@@ -32,12 +32,19 @@ module.exports.login = async (req, res) => {
       });
       return;
     }
+    const userInfo = {
+      _id: user._id, // ← ID THẬT TỪ DATABASE
+      fullName: user.fullName,
+      email: user.email,
+      role: user.role || "MANAGER",
+    };
     const token = user.token;
     res.cookie("token", token);
     res.json({
       code: 200,
       message: "Dang nhap thanh cong",
       token: token,
+      user: userInfo,
     });
   } catch (error) {
     res.json({

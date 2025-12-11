@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema(
     email: String,
     password: String,
     token: String,
+    position_job: String,
     role: {
       type: String,
       default: "USER", // Mặc định là USER. Muốn có tài khoản MANAGER thì do admin cấp.

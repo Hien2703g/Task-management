@@ -2,8 +2,8 @@ const express = require("express");
 const route = express.Router();
 const multer = require("multer");
 const uploadCloudinary = require("../../middlewares/Manager/uploadClould.middlewares");
-const controller = require("../../controllers/Manager/project.controller");
 const upload = multer();
+const controller = require("../../controllers/Manager/project.controller");
 
 route.get("/", controller.index);
 

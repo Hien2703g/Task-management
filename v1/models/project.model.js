@@ -12,7 +12,7 @@ const projectSchema = new mongoose.Schema(
     deletedBy: String,
     listUser: Array,
     projectParentId: String,
-    assignee_id: String,
+    tags: String,
     deleted: {
       type: Boolean,
       default: false,
