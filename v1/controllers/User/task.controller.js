@@ -5,6 +5,7 @@ const Notification = require("../../models/notification.model");
 
 //[GET]/api/v1/tasks
 module.exports.index = async (req, res) => {
+  // console.log(res.locals.settingGeneral);
   const find = {
     deleted: false,
     createdBy: req.user.id,

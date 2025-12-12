@@ -108,7 +108,127 @@ module.exports.create = async (req, res) => {
     });
   }
 };
+//[GET]/api/v3/projects/add-member/:id
+module.exports.ListUser = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const project = await Project.findOne({
+      _id: id,
+      deleted: false,
+    });
 
+    if (!project) {
+      return res.status(404).json({
+        code: 404,
+        message: "Project không tồn tại",
+      });
+    }
+
+    let users;
+
+    if (project.projectParentId) {
+      const projectParent = await Project.findOne({
+        _id: project.projectParentId,
+        deleted: false,
+      });
+
+      if (projectParent) {
+        const userIds =
+          Array.isArray(projectParent.listUser) &&
+          projectParent.listUser.length > 0
+            ? projectParent.listUser
+            : [projectParent.createdBy];
+
+        users = await User.find({
+          _id: { $in: userIds },
+          deleted: false,
+        }).select("-password -token");
+      } else {
+        users = await User.find({ deleted: false }).select("-password -token");
+      }
+    } else {
+      users = await User.find({ deleted: false }).select("-password -token");
+    }
+
+    return res.json({
+      code: 200,
+      message: "Lấy danh sách user thành công",
+      data: users,
+    });
+  } catch (error) {
+    console.error("ListUser error:", error);
+    return res.status(500).json({
+      code: 500,
+      message: "Lỗi server",
+    });
+  }
+};
+//[PATCH]/api/v3/projects/add-member/:id
+module.exports.addMember = async (req, res) => {
+  const projectId = req.params.id;
+  const { ListUser } = req.body;
+
+  try {
+    // Kiểm tra ListUser hợp lệ
+    if (!Array.isArray(ListUser) || ListUser.length === 0) {
+      return res.status(400).json({
+        code: 400,
+        message: "ListUser phải là array và không được rỗng",
+      });
+    }
+
+    // Tìm project
+    const project = await Project.findOne({ _id: projectId, deleted: false });
+    if (!project) {
+      return res.status(404).json({
+        code: 404,
+        message: "Project không tồn tại",
+      });
+    }
+
+    // Lấy danh sách user hợp lệ
+    const users = await User.find({
+      _id: { $in: ListUser },
+      deleted: false,
+    });
+
+    // Nếu thiếu user nào => báo lỗi
+    if (users.length !== ListUser.length) {
+      return res.status(404).json({
+        code: 404,
+        message: "Một hoặc nhiều User trong danh sách không tồn tại",
+      });
+    }
+
+    // Lọc ra user chưa có trong project
+    const usersToAdd = ListUser.filter(
+      (userId) => !project.listUser.includes(userId)
+    );
+
+    if (usersToAdd.length === 0) {
+      return res.status(400).json({
+        code: 400,
+        message: "Tất cả User trong danh sách đã có trong project",
+      });
+    }
+
+    // Thêm user mới
+    project.listUser.push(...usersToAdd);
+    await project.save();
+
+    return res.json({
+      code: 200,
+      message: "Thêm thành viên thành công",
+      data: project,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      code: 500,
+      message: "Lỗi server",
+    });
+  }
+};
 //[PATCH]/api/v1/projects/edit/:id
 module.exports.edit = async (req, res) => {
   try {

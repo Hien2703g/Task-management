@@ -14,10 +14,6 @@ const settingGeneralSchema = new mongoose.Schema(
   }
 );
 
-const SettingGeneral = mongoose.model(
-  "SettingGeneral",
-  settingGeneralSchema,
-  "settings-general"
-);
-
-module.exports = SettingGeneral;
+module.exports =
+  mongoose.models.SettingGeneral ||
+  mongoose.model("SettingGeneral", settingGeneralSchema, "settings-general");

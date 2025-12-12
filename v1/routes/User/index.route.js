@@ -5,9 +5,11 @@ const diaryRoute = require("./user.route");
 const userSocialRoutes = require("./social.route");
 
 const authMiddleware = require("../../middlewares/User/auth.middlewares");
+const settingMiddleware = require("../../middlewares/User/setting.middleware");
 
 module.exports = (app) => {
   const version = "/api/v1";
+  app.use(settingMiddleware.settingGeneral);
 
   app.use(version + "/tasks", authMiddleware.requireAuth, taskRoute);
 
