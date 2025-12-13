@@ -13,6 +13,7 @@ const projectSchema = new mongoose.Schema(
     listUser: Array,
     projectParentId: String,
     tags: String,
+    manager: String,
     deleted: {
       type: Boolean,
       default: false,

@@ -93,3 +93,15 @@ module.exports.logout = (req, res) => {
     });
   }
 };
+
+//[GET] /api/v3/users/listuser
+module.exports.listuser = async (req, res) => {
+  const users = await User.find({
+    deleted: false,
+  }).select("fullName email");
+  res.json({
+    code: 200,
+    message: "Thành công",
+    users: users,
+  });
+};

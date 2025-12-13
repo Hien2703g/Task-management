@@ -27,9 +27,9 @@ route.patch(
   controller.edit
 );
 
-route.get("/add-member/:id", controller.ListUser);
+// route.get("/add-member/:id", controller.ListUser);
 
-route.patch("/add-member/:id", controller.addMember);
+// route.patch("/add-member/:id", controller.addMember);
 
 route.patch("/delete/:id", controller.delete);
 

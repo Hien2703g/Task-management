@@ -5,10 +5,11 @@ const sendMailHelper = require("../../helpers/send-mail");
 
 const User = require("../../models/user.model");
 const ForgotPassword = require("../../models/forgot-password.model");
+const Project = require("../../models/project.model");
 
 //[POST] /api/v1/users/register
 module.exports.register = async (req, res) => {
-  console.log(req.body);
+  // console.log(req.body);
   req.body.password = md5(req.body.password);
   // console.log(req.body);
   const existEmail = await User.findOne({
@@ -41,7 +42,7 @@ module.exports.register = async (req, res) => {
 
 //[POST] /api/v1/users/login
 module.exports.login = async (req, res) => {
-  console.log(req.body);
+  // console.log(req.body);
   const email = req.body.email;
   const password = req.body.password;
   const user = await User.findOne({
@@ -253,7 +254,7 @@ module.exports.detail = async (req, res) => {
   });
 };
 
-//[GET] /api/v1/users/listuser
+//[GET] /api/v3/users/listuser
 module.exports.listuser = async (req, res) => {
   const users = await User.find({
     deleted: false,

@@ -19,8 +19,8 @@ route.post(
   uploadCloudinary.upload,
   controller.create
 );
-route.get("/add-member/:id", controller.ListUser);
-route.patch("/add-member/:id", controller.addMember);
+// route.get("/add-member/:id", controller.ListUser);
+// route.patch("/add-member/:id", controller.addMember);
 
 // route.patch("/remote-member/:id", controller.remoteMember);
 

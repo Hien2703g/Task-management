@@ -89,6 +89,8 @@ module.exports.create = async (req, res) => {
     });
     // console.log(ProjectParent);
     if (ProjectParent) {
+      req.body.manager = ProjectParent.manager;
+      // console.log(req.body);
       const project = new Project(req.body);
       const data = await project.save();
       res.json({

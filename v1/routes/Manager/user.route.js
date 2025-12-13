@@ -10,6 +10,6 @@ route.get("/logout", controller.logout);
 
 route.get("/detail", authMiddleware.requireAuth, controller.detail);
 
-// route.get("/listuser", authMiddleware.requireAuth, controller.listuser);
+route.get("/listuser", authMiddleware.requireAuth, controller.listuser);
 
 module.exports = route;

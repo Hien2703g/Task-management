@@ -3,10 +3,16 @@ const Comment = require("../../models/comment.model");
 const PagitationHelper = require("../../helpers/pagitation");
 const SearchHelper = require("../../helpers/search");
 const User = require("../../models/user.model");
+const Team = require("../../models/team.model");
+const mongoose = require("mongoose");
 //[GET]/api/v3/projects
 module.exports.index = async (req, res) => {
   const find = {
-    $or: [{ createdBy: req.user.id }, { listUser: req.user.id }],
+    $or: [
+      { manager: req.user.id },
+      { createdBy: req.user.id },
+      { listUser: req.user.id },
+    ],
     deleted: false,
   };
   if (req.query.status) {
@@ -54,7 +60,7 @@ module.exports.detail = async (req, res) => {
       project_id: id,
     };
     const comment = await Comment.find(findcomment);
-    console.log(comment);
+    // console.log(comment);
     const project = await Project.findOne({
       _id: id,
       deleted: false,
@@ -72,172 +78,53 @@ module.exports.detail = async (req, res) => {
 
 //[POST]/api/v3/projects/create
 module.exports.create = async (req, res) => {
-  // console.log("ok");
-  // console.log(req.user);
-  try {
-    req.body.createdBy = req.user.id;
-    // console.log(req.body.projectParentId);
-    // const ProjectParen = await Project.findOne({
-    //   _id: req.body.projectParentId,
-    //   deleted: false,
-    // });
-    const project = new Project(req.body);
-    console.log(project);
-    const data = await project.save();
-    res.json({
-      code: 200,
-      message: "success",
-      data: data,
-    });
-    // console.log(ProjectParen);
-    // if (ProjectParen) {
-    //   const project = new Project(req.body);
-    //   const data = await project.save();
-    //   res.json({
-    //     code: 200,
-    //     message: "success",
-    //     data: data,
-    //   });
-    // } else {
-    //   res.json({
-    //     code: 400,
-    //     message: "Khoong thấy ProjectParen",
-    //   });
-    // }
-  } catch (error) {
-    console.log(error);
-    res.json({
-      code: 404,
-      message: "dismiss",
-    });
-  }
-};
-//[GET]/api/v3/projects/add-member/:id
-module.exports.ListUser = async (req, res) => {
-  try {
-    const id = req.params.id;
-    const project = await Project.findOne({
-      _id: id,
-      deleted: false,
-    });
-
-    if (!project) {
-      return res.status(404).json({
-        code: 404,
-        message: "Project không tồn tại",
-      });
-    }
-
-    let users;
-
-    if (project.projectParentId) {
-      const projectParent = await Project.findOne({
-        _id: project.projectParentId,
-        deleted: false,
-      });
-
-      if (projectParent) {
-        const userIds =
-          Array.isArray(projectParent.listUser) &&
-          projectParent.listUser.length > 0
-            ? projectParent.listUser
-            : [projectParent.createdBy];
-
-        users = await User.find({
-          _id: { $in: userIds },
-          deleted: false,
-        });
-      } else {
-        users = await User.find({ deleted: false }).select("-password -token");
-      }
-    } else {
-      users = await User.find({ deleted: false }).select("-password -token");
-    }
-
-    return res.json({
-      code: 200,
-      message: "Lấy danh sách user thành công",
-      data: users,
-    });
-  } catch (error) {
-    console.error("ListUser error:", error);
-    return res.status(500).json({
-      code: 500,
-      message: "Lỗi server",
-    });
-  }
-};
-//[PATCH]/api/v3/projects/add-member/:id
-module.exports.addMember = async (req, res) => {
-  const projectId = req.params.id;
-  const { ListUser } = req.body;
+  const session = await mongoose.startSession();
 
   try {
-    // Kiểm tra ListUser hợp lệ
-    if (!Array.isArray(ListUser) || ListUser.length === 0) {
-      return res.status(400).json({
-        code: 400,
-        message: "ListUser phải là array và không được rỗng",
-      });
-    }
+    session.startTransaction();
 
-    // Tìm project
-    const project = await Project.findOne({ _id: projectId, deleted: false });
-    if (!project) {
-      return res.status(404).json({
-        code: 404,
-        message: "Project không tồn tại",
-      });
-    }
+    const payload = {
+      ...req.body,
+      createdBy: req.user.id,
+      manager: req.user.id,
+    };
 
-    // Lấy danh sách user hợp lệ
-    const users = await User.find({
-      _id: { $in: ListUser },
-      deleted: false,
-    }).select("-password -token");
+    const [project] = await Project.create([payload], { session });
 
-    // Nếu thiếu user nào => báo lỗi
-    if (users.length !== ListUser.length) {
-      return res.status(404).json({
-        code: 404,
-        message: "Một hoặc nhiều User trong danh sách không tồn tại",
-      });
-    }
-
-    // Lọc ra user chưa có trong project
-    const usersToAdd = ListUser.filter(
-      (userId) => !project.listUser.includes(userId)
+    const [team] = await Team.create(
+      [
+        {
+          project_id: project._id,
+          name: project.title,
+          leader: req.user.id,
+          description: project.content,
+          listUser: req.body.listUser,
+          manager: project.manager,
+        },
+      ],
+      { session }
     );
 
-    if (usersToAdd.length === 0) {
-      return res.status(400).json({
-        code: 400,
-        message: "Tất cả User trong danh sách đã có trong project",
-      });
-    }
+    await session.commitTransaction();
 
-    // Thêm user mới
-    project.listUser.push(...usersToAdd);
-    await project.save();
-
-    return res.json({
+    return res.status(201).json({
       code: 200,
-      message: "Thêm thành viên thành công",
+      message: "success",
       data: project,
+      team: team,
     });
   } catch (error) {
+    await session.abortTransaction();
     console.error(error);
+
     return res.status(500).json({
       code: 500,
-      message: "Lỗi server",
+      message: "CREATE_PROJECT_FAILED",
     });
+  } finally {
+    session.endSession();
   }
 };
-// //[PATCH]/api/v3/projects/remote-member/:id
-// module.exports.remoteMember = async (req, res) => {
-//   const id = req.params.id;
-// };
-
 //[PATCH]/api/v3/projects/edit/:id
 module.exports.edit = async (req, res) => {
   try {
@@ -247,33 +134,49 @@ module.exports.edit = async (req, res) => {
       _id: id,
       deleted: false,
     });
-    const createdUser = await User.findOne({
-      _id: data1.createdBy,
+    // 1. Kiểm tra project tồn tại
+    const existingProject = await Project.findOne({
+      _id: id,
+      deleted: false,
     });
-    // console.log(createdUser.id);
-    // console.log(req.user.id);
-    if (createdUser.id === req.user.id) {
-      // console.log("OK");
-      await Project.updateOne({ _id: id }, req.body);
-      const data = await Project.findOne({
-        _id: id,
-        deleted: false,
-      });
-      res.json({
-        code: 200,
-        message: "success, cập nhật thành công",
-        data: data,
-      });
-    } else {
-      res.json({
-        code: 200,
-        message: "Ban khong phai nguoi tao du an, nen khong the sửa",
+
+    if (!existingProject) {
+      console.log("Project not found");
+      return res.json({
+        code: 404,
+        message: "Project not found or deleted",
       });
     }
+    // 2. Kiểm tra quyền chỉnh sửa (chỉ người tạo được sửa)
+    const createdUser = await User.findOne({
+      _id: existingProject.createdBy,
+    });
+
+    if (!createdUser || createdUser._id.toString() !== req.user.id) {
+      console.log("Permission denied - User is not the creator");
+      return res.json({
+        code: 200,
+        message: "Bạn không phải người tạo dự án, nên không thể sửa",
+      });
+    }
+    const updateResult = await Project.updateOne(
+      { _id: id, deleted: false },
+      { $set: req.body }
+    );
+    const updatedProject = await Project.findOne({
+      _id: id,
+      deleted: false,
+    });
+    res.json({
+      code: 200,
+      message: "Cập nhật thành công",
+      data: updatedProject,
+    });
   } catch (error) {
+    console.error("Edit error:", error.message);
     res.json({
       code: 404,
-      message: "dismiss",
+      message: "dismiss" + error.message,
     });
   }
 };
@@ -423,6 +326,7 @@ module.exports.comment = async (req, res) => {
       });
     }
   } catch (error) {
+    s;
     res.json({
       code: 404,
       message: "dismiss",
