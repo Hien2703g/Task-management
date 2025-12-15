@@ -105,3 +105,48 @@ module.exports.listuser = async (req, res) => {
     users: users,
   });
 };
+
+// [PATCH] /user/edit
+module.exports.editPatch = async (req, res) => {
+  const id = req.user.id;
+  try {
+    const emailExist = await User.findOne({
+      _id: {
+        $ne: id,
+      },
+      email: req.body.email,
+      deleted: false,
+    });
+
+    if (emailExist) {
+      res.json({
+        code: 500,
+        message: "Email da ton tai",
+      });
+    } else {
+      if (req.body.password) {
+        req.body.password = md5(req.body.password);
+      } else {
+        delete req.body.password;
+      }
+
+      const users = await User.updateOne(
+        {
+          _id: id,
+        },
+        req.body
+      );
+
+      res.json({
+        code: 200,
+        message: "Thành công",
+        users: users,
+      });
+    }
+  } catch (error) {
+    res.json({
+      code: 400,
+      message: "Dismiss",
+    });
+  }
+};

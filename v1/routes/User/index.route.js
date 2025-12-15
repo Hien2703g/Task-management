@@ -4,13 +4,16 @@ const projectRoute = require("./project.route");
 const diaryRoute = require("./user.route");
 const userSocialRoutes = require("./social.route");
 const chatRoutes = require("./chat.route");
+const dashboardRouter = require("./dashboard.route");
 
 const authMiddleware = require("../../middlewares/User/auth.middlewares");
 const settingMiddleware = require("../../middlewares/User/setting.middleware");
-
+const userMiddleware = require("../../middlewares/User/user.middleware");
 module.exports = (app) => {
   const version = "/api/v1";
   app.use(settingMiddleware.settingGeneral);
+  // app.use(userMiddleware.infoUser);
+  app.use(version + "/dashboard", authMiddleware.requireAuth, dashboardRouter);
 
   app.use(version + "/tasks", authMiddleware.requireAuth, taskRoute);
 

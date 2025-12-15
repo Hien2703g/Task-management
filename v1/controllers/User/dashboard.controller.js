@@ -5,15 +5,51 @@ module.exports.getDashboard = async (req, res) => {
   try {
     const userId = req.user._id; // lấy từ middleware auth
 
+    // Tổng số task
+    const totalTasks = await Task.countDocuments({
+      deleted: false,
+      createdBy: userId,
+    });
+    // Task pending
+    const pendingTasks = await Task.countDocuments({
+      status: "pending",
+      deleted: false,
+    });
+    // Task hoàn thành
+    const doneTasks = await Task.countDocuments({
+      status: "done",
+      deleted: false,
+    });
+    // Productivity %
+    const productivity =
+      totalTasks === 0 ? 0 : Math.round((doneTasks / totalTasks) * 100);
+    // Task distribution cho chart
+    const taskDistribution = await Task.aggregate([
+      {
+        $match: { deleted: false },
+      },
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+    const chartData = {
+      pending: 0,
+      in_progress: 0,
+      done: 0,
+    };
+    taskDistribution.forEach((item) => {
+      chartData[item._id] = item.count;
+    });
+    // End Tasks
+
     //Project.
     // Tổng số Project
     const totalProjects = await Project.countDocuments({
       deleted: false,
-      $or: [{ manager: userId }, { createdBy: userId }, { listUser: userId }],
-    });
-    const totalPM = await Project.countDocuments({
-      deleted: false,
-      $or: [{ manager: userId }, { createdBy: userId }],
+      $or: [{ createdBy: userId }, { listUser: userId }],
     });
     // Projects pending
     const pendingProjetcs = await Project.countDocuments({
@@ -58,9 +94,14 @@ module.exports.getDashboard = async (req, res) => {
     // End Project
     return res.status(200).json({
       code: 200,
+      tasks: {
+        totalTasks,
+        pendingTasks,
+        productivity,
+        chartData,
+      },
       projects: {
         totalProjects,
-        totalPM,
         pendingProjetcs,
         teamProjects,
         productivityProject,
