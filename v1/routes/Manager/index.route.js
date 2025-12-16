@@ -1,6 +1,7 @@
 const projectRoute = require("./project.route");
 const userRoute = require("./user.route");
 const dashboardRouter = require("./dashboard.route");
+const calendarRouter = require("./calendar.route");
 
 const authMiddleware = require("../../middlewares/Manager/auth.middlewares");
 const settingMiddleware = require("../../middlewares/Manager/setting.middleware");
@@ -12,4 +13,6 @@ module.exports = (app) => {
   app.use(version + "/projects", authMiddleware.requireAuth, projectRoute);
 
   app.use(version + "/users", userRoute);
+
+  app.use(version + "/calendars", authMiddleware.requireAuth, calendarRouter);
 };
