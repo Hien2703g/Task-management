@@ -57,7 +57,8 @@ module.exports.login = async (req, res) => {
     return;
   }
   // console(email);
-  // console(password);
+  console.log(md5(password));
+  console.log(user);
   if (md5(password) !== user.password) {
     res.json({
       code: 404,

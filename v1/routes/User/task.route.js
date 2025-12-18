@@ -30,6 +30,8 @@ route.patch(
 
 route.patch("/delete/:id", controller.delete);
 
+route.get("/suggest-schedule", controller.suggestSchedule);
+
 route.patch("/priority/:id", controller.changePriority);
 
 module.exports = route;

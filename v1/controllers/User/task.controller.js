@@ -1,6 +1,7 @@
 const Task = require("../../models/task.model");
 const PagitationHelper = require("../../helpers/pagitation");
 const SearchHelper = require("../../helpers/search");
+const { suggestSchedule } = require("../../helpers/suggest-schedule");
 const Notification = require("../../models/notification.model");
 
 //[GET]/api/v1/tasks
@@ -244,6 +245,39 @@ module.exports.changePriority = async (req, res) => {
     res.json({
       code: 404,
       message: "dismiss",
+    });
+  }
+};
+
+// [GET] /api/v1/tasks/suggestSchedule
+module.exports.suggestSchedule = async (req, res) => {
+  try {
+    const userId = req.user?.id || req.query.userId;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const tasks = await Task.find({
+      createdBy: userId,
+      deleted: false,
+      status: { $ne: "done" },
+    });
+
+    const schedule = suggestSchedule(tasks);
+
+    return res.json({
+      success: true,
+      totalTasks: tasks.length,
+      schedule,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message,
     });
   }
 };

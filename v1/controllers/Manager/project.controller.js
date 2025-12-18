@@ -7,48 +7,67 @@ const Team = require("../../models/team.model");
 const mongoose = require("mongoose");
 //[GET]/api/v3/projects
 module.exports.index = async (req, res) => {
-  const find = {
-    $or: [
-      { manager: req.user.id },
-      { createdBy: req.user.id },
-      { listUser: req.user.id },
-    ],
-    deleted: false,
-  };
-  if (req.query.status) {
-    find.status = req.query.status;
-  }
-  //Search
-  let objectSearch = SearchHelper(req.query);
-  if (req.query.keyword) {
-    find.title = objectSearch.regex;
-  }
-  //end search
-  //Pagination
-  let initPagination = {
-    currentPage: 1,
-    limitItem: 2,
-  };
-  const countProjects = await Project.countDocuments(find);
-  const objectPagination = PagitationHelper(
-    req.query,
-    initPagination,
-    countProjects
-  );
-  //End Pagination
-  //sort
-  // console.log(req.query);
-  const sort = {};
-  if (req.query.sortKey && req.query.sortValue) {
-    sort[req.query.sortKey] = req.query.sortValue;
-  }
-  //end sort
-  const projects = await Project.find(find)
-    .sort(sort)
-    .limit(objectPagination.limitItem)
-    .skip(objectPagination.skip);
+  try {
+    const find = {
+      $or: [
+        { manager: req.user.id },
+        { createdBy: req.user.id },
+        { listUser: req.user.id },
+      ],
+      deleted: false,
+      projectParentId: { $exists: false }, // CHỈ lấy dự án không có parent
+    };
+    if (req.query.status) {
+      find.status = req.query.status;
+    }
+    //Search
+    let objectSearch = SearchHelper(req.query);
+    if (req.query.keyword) {
+      find.title = objectSearch.regex;
+    }
+    //end search
+    //Pagination
+    let initPagination = {
+      currentPage: 1,
+      limitItem: 2,
+    };
+    const countProjects = await Project.countDocuments(find);
+    const objectPagination = PagitationHelper(
+      req.query,
+      initPagination,
+      countProjects
+    );
+    //End Pagination
+    //sort
+    // console.log(req.query);
+    const sort = {};
+    if (req.query.sortKey && req.query.sortValue) {
+      sort[req.query.sortKey] = req.query.sortValue;
+    } else {
+      sort.createdAt = -1;
+    }
+    //end sort
+    const projects = await Project.find(find)
+      .sort(sort)
+      .limit(objectPagination.limitItem)
+      .skip(objectPagination.skip);
 
-  res.json(projects);
+    // Debug log
+    projects.forEach((p, i) => {
+      console.log(
+        `  ${i + 1}. ${p.title} - ParentID: ${p.projectParentId || "None"}`
+      );
+    });
+
+    res.json(projects);
+  } catch (error) {
+    console.error("ERROR in MANAGER GET PROJECTS:", error);
+    res.status(500).json({
+      code: 500,
+      message: "Lỗi server",
+      error: error.message,
+    });
+  }
 };
 
 //[GET]/api/v3/projects/detail/:id

@@ -37,6 +37,7 @@ module.exports.login = async (req, res) => {
       fullName: user.fullName,
       email: user.email,
       role: user.role || "MANAGER",
+      avatar: user.avatar || "",
     };
     const token = user.token;
     res.cookie("token", token);
@@ -98,7 +99,7 @@ module.exports.logout = (req, res) => {
 module.exports.listuser = async (req, res) => {
   const users = await User.find({
     deleted: false,
-  }).select("fullName email");
+  }).select("fullName email avatar");
   res.json({
     code: 200,
     message: "Thành công",

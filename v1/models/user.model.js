@@ -3,31 +3,66 @@ const generate = require("../helpers/generate");
 
 const userSchema = new mongoose.Schema(
   {
-    fullName: String,
-    email: String,
-    password: String,
-    token: String,
-    position_job: String,
-    role: {
+    fullName: {
       type: String,
-      default: "USER", // Mặc định là USER. Muốn có tài khoản MANAGER thì do admin cấp.
+      required: true,
+      trim: true,
+      maxlength: 100,
     },
 
-    phone: String,
-    avatar: String,
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+      index: true,
+    },
+
+    password: {
+      type: String,
+      required: true,
+      // select: false, // KHÔNG trả về khi query
+    },
+
+    token: {
+      type: String,
+      // select: false,
+    },
+    role: {
+      type: String,
+      enum: ["MANAGER", "USER"],
+      default: "USER",
+      index: true,
+    },
+
+    phone: {
+      type: String,
+      trim: true,
+    },
+
+    avatar: {
+      type: String,
+    },
     status: {
       type: String,
       default: "active",
     },
-    requestFriends: Array, // Lời mời đã gửi
-    acceptFriends: Array, // Lời mời đã nhận
-    friendList: [
-      // danh sách bạn bè
-      {
-        user_id: String,
-        room_chat_id: String,
-      },
-    ],
+    // requestFriends: Array, // Lời mời đã gửi
+    // acceptFriends: Array, // Lời mời đã nhận
+    // friendList: [
+    //   // danh sách bạn bè
+    //   {
+    //     user_id: String,
+    //     room_chat_id: String,
+    //   },
+    // ],
+    workingHoursPerDay: {
+      type: Number,
+      default: 8,
+      min: 1,
+      max: 24,
+    },
     statusOnline: String,
     deletedBy: {
       account_id: String,
